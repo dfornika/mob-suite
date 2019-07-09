@@ -29,6 +29,8 @@ def parse_args():
     parser.add_argument('-m','--mode', type=str, required=True, help='Build: Create a new database from scratch, Update: Update an existing database with one or more sequences')
     parser.add_argument('-o','--outdir', type=str, required=True, help='Output Directory to put results')
     parser.add_argument('-i','--infile', type=str, required=True, help='Input fasta file of one or more closed plasmids to process')
+    parser.add_argument('--min_cluster_distance', type=float, required=False, default=0.0001, help='Minimum mash distance for clustering')
+    parser.add_argument('--max_cluster_distance', type=float, required=False, default=0.0500, help='Maximum mash distance for clustering')
     parser.add_argument('--ref_cluster_file', type=str, required=False, help='Reference mob-cluster file')
     parser.add_argument('--ref_fasta_file', type=str, required=False, help='Reference mob-cluster fasta file')
     parser.add_argument('--ref_mash_db', type=str, required=False, help='Reference mob-cluster mash sketch file')
@@ -246,7 +248,7 @@ def main():
         print(('Error you have not entered a valid mode of build or update, you entered: {}'.format(mode)))
         sys.exit()
 
-    header = ('id', 0.05, 0.0001)
+    header = ('id', args.max_cluster_distance, args.min_cluster_distance)
     tmp_cluster_file = os.path.join(out_dir, 'clusters.txt')
     tmp_ref_fasta_file = os.path.join(tmp_dir, 'references_tmp.fasta')
     update_fasta = os.path.join(out_dir, 'references_updated.fasta')
@@ -305,7 +307,7 @@ def main():
         mashfile_handle = open(distance_matrix_file,'w')
 
         mashObj.run_mash(input_fasta+'.msh', input_fasta+'.msh', mashfile_handle,table=True,num_threads=num_threads)
-        clust_assignments = build_cluster_db(distance_matrix_file, (0.05, 0.0001))
+        clust_assignments = build_cluster_db(distance_matrix_file, (args.max_cluster_distance, args.min_cluster_distance))
         writeClusterAssignments(tmp_cluster_file, header, clust_assignments)
         clust_dict = selectCluster(clust_assignments, 1)
         shutil.copy(input_fasta, tmp_ref_fasta_file)
